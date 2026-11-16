@@ -1,10 +1,10 @@
 from fastapi import Depends, FastAPI, status
 from sqlalchemy.orm import Session
-
 from app.database import Base, SessionLocal, engine
 from app.model import Incident
 from app.schemas import IncidentCreation, IncidentReponse
 from fastapi import Depends, FastAPI, HTTPException, status
+from app.schemas import IncidentCreation, IncidentMiseAJour, IncidentReponse
 
 # Crée les tables au démarrage si elles n'existent pas.
 Base.metadata.create_all(bind=engine)
@@ -109,5 +109,37 @@ def get_incident_by_id(
             status_code=404,
             detail="Incident introuvable"
         )
+
+    return incident_to_response(incident)
+
+
+@app.patch("/incidents/{incident_id}", response_model=IncidentReponse)
+def modifier_incident(
+    incident_id: int,
+    donnees: IncidentMiseAJour,
+    db: Session = Depends(get_db)
+):
+    incident = (
+        db.query(Incident)
+        .filter(Incident.id == incident_id)
+        .first()
+    )
+
+    if incident is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Incident introuvable"
+        )
+
+    modifications = donnees.model_dump(
+        exclude_unset=True,
+        mode="json"
+    )
+
+    for champ, valeur in modifications.items():
+        setattr(incident, champ, valeur)
+
+    db.commit()
+    db.refresh(incident)
 
     return incident_to_response(incident)

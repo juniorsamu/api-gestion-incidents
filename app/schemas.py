@@ -29,3 +29,9 @@ class IncidentReponse(IncidentCreation):
     id: int
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class IncidentMiseAJour(BaseModel):
+    priorite: Priorite | None = None
+    status: Status | None = None
+    description: str | None = Field(default=None, min_length=5)

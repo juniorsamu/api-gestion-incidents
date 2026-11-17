@@ -5,6 +5,7 @@ from app.model import Incident
 from app.schemas import IncidentCreation, IncidentReponse
 from fastapi import Depends, FastAPI, HTTPException, status
 from app.schemas import IncidentCreation, IncidentMiseAJour, IncidentReponse
+from sqlalchemy import func
 
 # Crée les tables au démarrage si elles n'existent pas.
 Base.metadata.create_all(bind=engine)
@@ -169,3 +170,37 @@ def supprimer_incident(
     db.commit()
 
     return None
+
+@app.get("/statistiques")
+def obtenir_statistiques(db: Session = Depends(get_db)):
+    total = db.query(Incident).count()
+
+    par_statut = {
+        statut: nombre
+        for statut, nombre in (
+            db.query(
+                Incident.status,
+                func.count(Incident.id)
+            )
+            .group_by(Incident.status)
+            .all()
+        )
+    }
+
+    par_priorite = {
+        priorite: nombre
+        for priorite, nombre in (
+            db.query(
+                Incident.priorite,
+                func.count(Incident.id)
+            )
+            .group_by(Incident.priorite)
+            .all()
+        )
+    }
+
+    return {
+        "total": total,
+        "par_statut": par_statut,
+        "par_priorite": par_priorite
+    }

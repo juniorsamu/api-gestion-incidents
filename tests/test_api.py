@@ -55,3 +55,18 @@ def test_cycle_de_vie_incident():
     verification = client.get(f"/incidents/{incident_id}")
 
     assert verification.status_code == 404
+
+
+def test_statistiques_sont_coherentes():
+    reponse = client.get("/statistiques")
+
+    assert reponse.status_code == 200
+
+    statistiques = reponse.json()
+
+    assert "total" in statistiques
+    assert "par_statut" in statistiques
+    assert "par_priorite" in statistiques
+
+    assert sum(statistiques["par_statut"].values()) == statistiques["total"]
+    assert sum(statistiques["par_priorite"].values()) == statistiques["total"]

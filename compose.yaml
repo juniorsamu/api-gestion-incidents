@@ -1,0 +1,11 @@
+services:
+  api:
+    build: .
+    container_name: api-incidents
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: "sqlite:////data/incidents.db"
+    volumes:
+      - ./data:/data
+    restart: unless-stopped

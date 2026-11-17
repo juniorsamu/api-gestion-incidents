@@ -143,3 +143,29 @@ def modifier_incident(
     db.refresh(incident)
 
     return incident_to_response(incident)
+
+
+@app.delete(
+    "/incidents/{incident_id}",
+    status_code=status.HTTP_204_NO_CONTENT
+)
+def supprimer_incident(
+    incident_id: int,
+    db: Session = Depends(get_db)
+):
+    incident = (
+        db.query(Incident)
+        .filter(Incident.id == incident_id)
+        .first()
+    )
+
+    if incident is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Incident introuvable"
+        )
+
+    db.delete(incident)
+    db.commit()
+
+    return None

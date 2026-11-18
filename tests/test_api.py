@@ -84,3 +84,55 @@ def test_modification_sans_jeton_est_refusee():
     )
 
     assert reponse.status_code == 401
+
+
+def test_recherche_par_titre_et_pagination():
+    headers = {
+        "Authorization": f"Bearer {creer_token('pytest')}"
+    }
+
+    donnees_incident = {
+        "titre": "Recherche pagination API",
+        "service": "tests-api",
+        "priorite": "Élevée",
+        "status": "Ouvert",
+        "description": "Incident créé pour tester la recherche et la pagination."
+    }
+
+    creation = client.post("/incidents", json=donnees_incident)
+
+    assert creation.status_code == 201
+
+    incident_id = creation.json()["id"]
+
+    try:
+        recherche = client.get(
+            "/incidents",
+            params={
+                "titre": "recherche pagination",
+                "limit": 10
+            }
+        )
+
+        assert recherche.status_code == 200
+
+        resultats = recherche.json()
+
+        assert any(
+            incident["id"] == incident_id
+            for incident in resultats
+        )
+
+        page = client.get(
+            "/incidents",
+            params={"skip": 0, "limit": 1}
+        )
+
+        assert page.status_code == 200
+        assert len(page.json()) <= 1
+
+    finally:
+        client.delete(
+            f"/incidents/{incident_id}",
+            headers=headers
+        )

@@ -1,12 +1,11 @@
-from fastapi import Depends, FastAPI, status
+from fastapi import Depends, FastAPI, HTTPException, Query, status
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 from app.database import Base, SessionLocal, engine
 from app.model import Incident
-from app.schemas import IncidentCreation, IncidentReponse
-from fastapi import Depends, FastAPI, HTTPException, status
 from app.schemas import IncidentCreation, IncidentMiseAJour, IncidentReponse
-from sqlalchemy import func
 from app.security import verifier_token
+
 
 # Crée les tables au démarrage si elles n'existent pas.
 Base.metadata.create_all(bind=engine)
@@ -77,6 +76,9 @@ def creation_incident(incident: IncidentCreation, db: Session = Depends(get_db))
 def get_incidents(
     status: str | None = None,
     priorite: str | None = None,
+    titre: str | None = None,
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=20, ge=1, le=100),
     db: Session = Depends(get_db)
 ):
     query = db.query(Incident)
@@ -87,7 +89,10 @@ def get_incidents(
     if priorite is not None:
         query = query.filter(Incident.priorite == priorite)
 
-    incidents = query.all()
+    if titre is not None:
+        query = query.filter(Incident.titre.ilike(f"%{titre.strip()}%"))
+
+    incidents = (query.order_by(Incident.id.desc()).offset(skip).limit(limit).all())
 
     return [
         incident_to_response(incident)

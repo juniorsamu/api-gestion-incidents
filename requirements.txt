@@ -4,3 +4,5 @@ SQLAlchemy==2.1.8
 Faker==40.54.0
 pytest==9.2.0
 httpx2==2.16.2
+PyJWT==2.15.1
+python-dotenv==1.2.4

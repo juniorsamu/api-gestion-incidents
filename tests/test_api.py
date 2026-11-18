@@ -1,6 +1,6 @@
 from fastapi.testclient import TestClient
-
 from app.main import app
+from app.security import creer_token
 
 
 client = TestClient(app)
@@ -39,16 +39,21 @@ def test_cycle_de_vie_incident():
 
     incident = creation.json()
     incident_id = incident["id"]
+    headers = {
+    "Authorization": f"Bearer {creer_token('pytest')}"}
 
     modification = client.patch(
         f"/incidents/{incident_id}",
-        json={"status": "Résolu"}
+        json={"status": "Résolu"},
+        headers=headers
     )
 
     assert modification.status_code == 200
     assert modification.json()["status"] == "Résolu"
 
-    suppression = client.delete(f"/incidents/{incident_id}")
+    suppression = client.delete(f"/incidents/{incident_id}",
+                                headers=headers
+    )
 
     assert suppression.status_code == 204
 
@@ -70,3 +75,12 @@ def test_statistiques_sont_coherentes():
 
     assert sum(statistiques["par_statut"].values()) == statistiques["total"]
     assert sum(statistiques["par_priorite"].values()) == statistiques["total"]
+
+    
+def test_modification_sans_jeton_est_refusee():
+    reponse = client.patch(
+        "/incidents/999999",
+        json={"status": "Résolu"}
+    )
+
+    assert reponse.status_code == 401

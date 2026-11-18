@@ -6,6 +6,7 @@ from app.schemas import IncidentCreation, IncidentReponse
 from fastapi import Depends, FastAPI, HTTPException, status
 from app.schemas import IncidentCreation, IncidentMiseAJour, IncidentReponse
 from sqlalchemy import func
+from app.security import verifier_token
 
 # Crée les tables au démarrage si elles n'existent pas.
 Base.metadata.create_all(bind=engine)
@@ -118,7 +119,8 @@ def get_incident_by_id(
 def modifier_incident(
     incident_id: int,
     donnees: IncidentMiseAJour,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    _token: dict = Depends(verifier_token)
 ):
     incident = (
         db.query(Incident)
@@ -152,7 +154,8 @@ def modifier_incident(
 )
 def supprimer_incident(
     incident_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    _token: dict = Depends(verifier_token)
 ):
     incident = (
         db.query(Incident)
